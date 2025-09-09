@@ -1,0 +1,2300 @@
+{
+  "name": "flux longform",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        352
+      ],
+      "id": "7d0d9623-aa2d-42ce-b63c-fbd90999c4f4",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        160,
+        80
+      ],
+      "id": "4932a918-5066-4f7f-90f6-5c0d5dd634c6",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2192,
+        400
+      ],
+      "id": "fc6c7131-5006-4a2f-a711-cf6376764384",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "content": "## Create Image Prompts\n",
+        "height": 360,
+        "width": 1040,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        320
+      ],
+      "id": "b2dcf831-0487-4baa-b608-e7b8be0e2012",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "40dc6e90-ddd9-447e-8db0-6a7bb1906f9d",
+              "name": "prompt",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "cbceb8b0-b983-41cd-b318-38f190a8f6fe",
+              "name": "FileName",
+              "value": "=http://host.docker.internal:9000/nca-toolkit/{{ $('Generate UUID').item.json.UUID }}.jpg",
+              "type": "string"
+            },
+            {
+              "id": "3988f5d5-24cf-4f6e-96f7-5000c1eeef50",
+              "name": "Clip Duration",
+              "value": "={{ $('Code2').item.json.duration }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        400
+      ],
+      "id": "6df9a2e1-2e6c-4f20-aaff-aceefa051433",
+      "name": "Set Prompt & url"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b72be074-4a67-4f45-be3e-e47d464131c3",
+              "name": "length",
+              "value": "=30",
+              "type": "number"
+            },
+            {
+              "id": "3c6b0102-35c6-4a47-9923-46e044faa10e",
+              "name": "speed",
+              "value": "=1",
+              "type": "number"
+            },
+            {
+              "id": "09eebe6d-21a4-4737-b825-1e44df45493b",
+              "name": "Number of images to generate",
+              "value": "=0",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        80
+      ],
+      "id": "c5d910a1-60c6-4fde-8525-34df269f87b2",
+      "name": "Set length & Speed"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "response"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        784
+      ],
+      "id": "c250bf28-7d00-4692-bddd-96701b90dff9",
+      "name": "Aggregate2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8080/v1/image/transform/video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": \"image-zoom-out\",\n  \"image_url\": \"{{ $json.FileName }}\",\n  \"length\": {{ $json['Clip Duration'] }},\n  \"frame_rate\": 25,\n  \"zoom_speed\": 1.25\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        784
+      ],
+      "id": "c02419e2-e204-400e-b927-36db028f6baf",
+      "name": "Create Video Clips",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tkF7nQLZPj4vy75X",
+          "name": "NCA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the array of URLs\nconst urls =  $input.first().json.response || [];\n\n// Map URLs into the required structure\nconst formattedURLs = urls.map(url => ({ \"video_url\": url }));\n\n// Return the transformed data\nreturn [{\n    json: {\n        \"video_urls\": formattedURLs\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        784
+      ],
+      "id": "51ec4ec8-63d3-4457-b491-8530089cc248",
+      "name": "Video url to array"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8080/v1/video/concatenate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"video_urls\": {{ JSON.stringify($json.video_urls) }},\n    \"id\": \"Job\"\n}",
+        "options": {
+          "timeout": 50000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2768,
+        784
+      ],
+      "id": "01db59b4-30c0-4e39-afe2-075bf2e1ce21",
+      "name": "Create Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tkF7nQLZPj4vy75X",
+          "name": "NCA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8080/v1/ffmpeg/compose",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"id\": \"audio-layering\",\n    \"inputs\": [\n        {\n            \"file_url\": \"{{ $json.response }}\"\n        },\n        {\n            \"file_url\": \"{{ $('Get Audio Duration').item.json.response[0].file_url }}\"\n        }\n    ],\n    \"filters\": [\n        {\n            \"filter\": \"[1:a]volume=1[outa]\"\n        }\n    ],\n    \"outputs\": [\n        {\n            \"options\": [\n                {\n                    \"option\": \"-map\",\n                    \"argument\": \"0:v\"\n                },\n                {\n                    \"option\": \"-map\",\n                    \"argument\": \"[outa]\"\n                },\n                {\n                    \"option\": \"-c:v\",\n                    \"argument\": \"copy\"\n                },\n                {\n                    \"option\": \"-c:a\",\n                    \"argument\": \"aac\"\n                }\n            ]\n        }\n    ]\n}\n",
+        "options": {
+          "timeout": 50000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2128,
+        1088
+      ],
+      "id": "33aab87f-81aa-44a4-9bad-d348ce69d7b9",
+      "name": "Add TTS To Video",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tkF7nQLZPj4vy75X",
+          "name": "NCA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Create Script\n",
+        "height": 280,
+        "width": 1500,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0deb3b24-c710-422d-8c20-ca394f825b5f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Create TTS\n",
+        "height": 280,
+        "width": 1040
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        0
+      ],
+      "id": "85b96659-49b5-415b-a08d-3c1550fe9620",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Generate Images using local Juggernaut XI",
+        "height": 360,
+        "width": 1440,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        944,
+        320
+      ],
+      "id": "cb8689dd-5d5a-4e95-b54b-6255507fbc37",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "nca-toolkit",
+        "fileName": "={{ $('Generate UUID').item.json.UUID }}.jpg",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        3088,
+        432
+      ],
+      "id": "2f367ac0-0332-417c-9f7b-f16cc6417faa",
+      "name": "Upload Image",
+      "credentials": {
+        "s3": {
+          "id": "7tycnIz9BYh5Q4YI",
+          "name": "S3 account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Create the video",
+        "height": 240,
+        "width": 1340,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        720
+      ],
+      "id": "79dbd7c0-869b-425d-8566-a8cf35316a3d",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Add TTS to video",
+        "height": 240,
+        "width": 1000,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        1008
+      ],
+      "id": "7aa8b986-73ca-4091-bba6-2aca984c264d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8080/v1/ffmpeg/compose",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": \"get-audio-duration\",\n  \"inputs\": [\n    {\n      \"file_url\": \"http://host.docker.internal:9000/nca-toolkit/{{ $('Generate UUID1').item.json.UUID }}.mp3\"\n    }\n  ],\n  \"outputs\": [\n    {\n      \"options\": [\n        {\n          \"option\": \"-f\",\n          \"argument\": \"mp3\"\n        }\n      ]\n    }\n  ],\n  \"metadata\": {\n    \"duration\": true\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        80
+      ],
+      "id": "ad2469ba-66f5-4377-a7f4-50e1df7324cd",
+      "name": "Get Audio Duration",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tkF7nQLZPj4vy75X",
+          "name": "NCA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "UUID"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        352
+      ],
+      "id": "aa64fc83-9024-4232-84fc-029a469f5f71",
+      "name": "Generate UUID"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2448,
+        432
+      ],
+      "id": "3619514b-7c4f-4dea-a968-4c020e38ba73",
+      "name": "Wait",
+      "webhookId": "ac51d4f7-4f9f-48e8-a123-78d1167511c7"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "nca-toolkit",
+        "fileName": "={{ $('Generate UUID1').item.json.UUID }}.{{ $binary.data.fileExtension }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        80
+      ],
+      "id": "00788f57-5878-43e4-bdb0-653c9228d968",
+      "name": "Upload Audio S",
+      "credentials": {
+        "s3": {
+          "id": "7tycnIz9BYh5Q4YI",
+          "name": "S3 account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Heres the full script:\n{{ $json.Script }}\n\n\nGenerative style:\nCinematic Ghost Ship Drama\n\nMake sure its not Content Moderated:\n\nHere is the current scene:\ncurrent scene:{{ $json.currentText }}\nPrevious scene :{{ $json.previousText }}\n\n\nNOTE :\n\nstricltly  Dont write anything inside \"\" this .\n\nWrite the prompt according to the current scene and taking reference from previous scene",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an image prompt generator agent for video production. Your role is to create starting frames for a longer video by transforming script segments into visually descriptive image prompts. Each scene will be generated in a specified artistic style, which must be factored into the prompt to ensure consistency.  \n\nDont write anything inside \"\" this .\n\nWrite the prompt according to the current scene and taking reference from previous scene\n\nOutput a JSON object containing the prompt for the current script segment that you are presented with:  \n```json\n{\n  \"Prompt\": \"enter prompt here\"\n}\n```  \n\n### **IMPORTANT INSTRUCTIONS:**  \n\n### ❌ Avoid:\n- Using **character names** (e.g., Tilly the Turtle)\n- Including **spoken lines** or any **written text**\n- Overly poetic or vague language\n- Repeating visual setups between prompts\n- Using character names (e.g., Tilly the Turtle)\n- Including spoken lines or any written text\n- Overly poetic or vague language\n- Repeating visual setups between prompts\n- Using quotation marks anywhere in the prompt output\n- Wrapping any words or phrases in quotes within the prompt description\n\n### Implement:\n- **Always** incorporate the given style into the visual description.  \n- **Never** include text in the images.\n- **Never** exceed 240 characters in your prompt.  \n- **Keep images visually compelling** – Instead of basic or static representations, focus on **dynamic compositions, dramatic angles, striking lighting, immersive textures, and environmental storytelling**.  \n- **Small subjects should have compelling micro-world narratives** – If the subject is small (e.g., a drop of water, a single key, a lone leaf), provide a **rich atmosphere**, interplay of lighting, and framing that enhances storytelling.  \n- **Focus on depth, detail, and artistic impact** rather than excessive complexity.  \n\nA well-crafted prompt should now include:  \n- **Subject:** The main focus of the image.  \n- **Style:** The artistic style provided for this scene (e.g., Lego, Minecraft, Disney Pixar, Hand-Drawn, Chibi, Anime, Hyper-Realistic, Cyberpunk).  \n- **Composition:** Use **engaging angles** (macro close-ups, over-the-shoulder, dynamic perspectives).  \n- **Lighting:** Prioritize dramatic effects like **backlighting, neon glows, moody shadows, or iridescent reflections** for added immersion. \n- **Micro-World Storytelling:** Ensure even small objects contribute to a **scene with intrigue, interaction, or emotion**.  \n- **Color Palette:** The dominant colors or color scheme.  \n- **Mood/Atmosphere:** The emotional tone of the image.  \n- **Technical Details:** Camera effects like **bokeh, depth of field, contrast**, or lens distortion to make the image feel real.  \n- **Additional Elements:** Small but meaningful details that **enhance interest without overwhelming the scene**.  \n\n## Example Prompts\n\n- **Style: Hyper-Realistic** – A hyperrealistic macro shot of a single droplet of glue stretching delicately from a cracked porcelain teacup, caught in the moment before it falls. The soft golden glow from a nearby desk lamp refracts through the droplet, revealing tiny swirling textures inside. Dust particles float around, illuminated in the warm evening light.  \n\n- **Style: Minecraft** – A blocky Minecraft-style cavern glowing with radiant blue crystals embedded in stone. A pixelated adventurer stands at the entrance, silhouetted against eerie, ambient light. Shadows dance across the cave walls, creating intrigue.  \n\n- **Style: Disney Pixar** – A cozy animated bakery at sunrise, where a little girl with oversized round glasses watches a tray of fresh golden pastries steaming on the counter. Soft beams of morning sunlight filter in, casting a warm, dreamy glow on the checkered tiles.  \n\n- **Style: Cyberpunk** – A neon-lit cyberpunk alleyway drenched in rain. The headlights of a hoverbike cut through thin mist as a shadowy figure in a metallic trench coat leans against a graffiti-covered wall. Bright neon blues and deep magentas create dramatic contrast."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        464
+      ],
+      "id": "2110202c-74c7-4a58-aaed-287b5df05412",
+      "name": "Image Prompter V2 📷",
+      "retryOnFail": false,
+      "waitBetweenTries": 2000,
+      "maxTries": 2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Prompt\": \"enter prompt here\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1024,
+        608
+      ],
+      "id": "629d844b-a365-4ad9-8470-39d7ee83e8cc",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite-preview-06-17",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        688,
+        544
+      ],
+      "id": "251710e3-6081-4265-81c4-7bfb42e2de1c",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IBd2S0og59iHMfrF",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Script",
+        "formDescription": "Enter you script",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Script"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        80
+      ],
+      "id": "43f31828-a082-4a85-a318-0e28c5a31c04",
+      "name": "On form submission",
+      "webhookId": "4e44dcba-9ab2-4979-974d-cbd18f83e437"
+    },
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "UUID"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        352,
+        80
+      ],
+      "id": "39b79649-6a4a-481a-a753-7cea78d1c90f",
+      "name": "Generate UUID1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.together.xyz/v1/images/generations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"black-forest-labs/FLUX.1-schnell-Free\",\n    \"prompt\": \"{{ $json.prompt }}\",\n    \"width\": 1024,\n    \"height\": 576,\n    \"steps\": 4,\n    \"n\": 1,\n    \"response_format\": \"b64_json\"\n   }",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2624,
+        432
+      ],
+      "id": "1a1de2ac-bf82-4ac2-ba54-f7aad3e3efc9",
+      "name": "HTTP Request9",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "maxTries": 5,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "3uY8P8xRDCRHnCfs",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31a2b3db-78a0-41b8-815f-ffb6c572279d",
+              "name": "base64",
+              "value": "={{ $json.body.data[0].b64_json }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2784,
+        432
+      ],
+      "id": "3c26f12e-0f55-400a-a5bf-623a77fc8b7d",
+      "name": "Set base1"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2944,
+        432
+      ],
+      "id": "90db01fa-a3dc-4fb6-bda4-a6ad71ad8b31",
+      "name": "Convert to File3"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "audio",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        704,
+        112
+      ],
+      "id": "4250ac52-1ddb-404e-b601-ee086c22ac56",
+      "name": "Form1",
+      "webhookId": "d979ad08-69dd-4fbd-aeba-106fd1fd49fc"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "audio",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        880,
+        112
+      ],
+      "id": "c6826f72-2c79-4ce6-93af-c3cfdbe8b00e",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        80
+      ],
+      "id": "79669837-43d5-43eb-8db0-5c7ddd89becc",
+      "name": "Convert to File5"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        400
+      ],
+      "id": "c9091266-50ff-4b30-bd72-37df871c533c",
+      "name": "Loop Over Items",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8080/v1/media/transcribe",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"media_url\": \"http://host.docker.internal:9000/nca-toolkit/{{ $('Generate UUID1').item.json.UUID }}.mp3\",\n    \"task\": \"transcribe\",\n    \"include_text\": true,\n    \"include_srt\": true,\n    \"include_segments\": true,\n    \"response_type\": \"direct\",\n    \"id\": \"custom-job-123\"\n  }",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1648,
+        80
+      ],
+      "id": "3f0c4330-9c55-4ae7-9af0-6fc63b7acb86",
+      "name": "Transcribe Media",
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tkF7nQLZPj4vy75X",
+          "name": "NCA"
+        }
+      },
+      "notes": "/v1/media/transcribe"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert SRT timestamp to seconds\nconst parseTime = (timestamp) => {\n  const [h, m, sMs] = timestamp.split(':');\n  const [s, ms] = sMs.split(',');\n  return (\n    parseInt(h) * 3600 +\n    parseInt(m) * 60 +\n    parseInt(s) +\n    parseInt(ms) / 1000\n  );\n};\n\n// Better sentence splitter (fallback for subtitles without punctuation)\nconst splitSentences = (text) => {\n  // Try splitting on .!? followed by space or line end\n  let sentences = text.match(/[^.!?]+[.!?]*/g);\n\n  // If no punctuation, fallback: split by 10 words each\n  if (!sentences || sentences.length === 1) {\n    const words = text.split(/\\s+/);\n    sentences = [];\n    for (let i = 0; i < words.length; i += 10) {\n      sentences.push(words.slice(i, i + 10).join(' '));\n    }\n  }\n\n  return sentences.slice(0, 3); // Only first 3\n};\n\n// Parse SRT from input\nconst srt = $input.first().json.response.srt;\n\n// Split into subtitle blocks\nconst blocks = srt.trim().split(/\\n\\s*\\n/);\n\n// Process each subtitle block\nconst parsedBlocks = blocks.map(block => {\n  const lines = block.split('\\n');\n  if (lines.length < 3) return null;\n\n  const timeLine = lines[1];\n  const [start, end] = timeLine.split(' --> ').map(parseTime);\n  const duration = parseFloat((end - start).toFixed(3));\n\n  const fullText = lines.slice(2).join(' ').trim();\n  const sentences = splitSentences(fullText);\n  const slicedText = sentences.join(' ').trim();\n\n  return { text: slicedText, duration };\n}).filter(item => item !== null);\n\n// Attach previousText and build result\nconst result = parsedBlocks.map((item, index, arr) => {\n  const previousText = index > 0 ? arr[index - 1].text : \"\";\n  return {\n    json: {\n      previousText,\n      currentText: item.text,\n      duration: item.duration\n    }\n  };\n});\n\nreturn result;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        112
+      ],
+      "id": "635a28b6-48d8-496b-933e-4fa54a6f19ae",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -80,
+        384
+      ],
+      "id": "73614993-2fe0-4062-8b31-f36c36a97c0a",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cd5b85a2-aa86-452e-856e-1f9babff4125",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1488,
+        512
+      ],
+      "id": "ffbd720a-97cb-42ae-815d-f95ba6557e04",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite-preview-06-17",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        624,
+        784
+      ],
+      "id": "c989aefa-08a6-45c6-870c-238f7e498ad1",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pIgMyD1c1r9TQfqq",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1792,
+        560
+      ],
+      "id": "1248bc46-da81-46ea-b101-402c05979b01",
+      "name": "Wait2",
+      "webhookId": "30e19f44-2039-49d1-b8bf-cefd6e341d20"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "Script, previousText, currentText",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        144,
+        384
+      ],
+      "id": "25a798b0-0899-4924-9e0f-32715df4fd79",
+      "name": "Split Out1"
+    }
+  ],
+  "pinData": {
+    "On form submission": [
+      {
+        "json": {
+          "Script": "I never believed that buildings could hold memories until I spent a night inside Ravenshollow State Hospital. The facility had been abandoned for nearly forty years, but standing in that crumbling entrance hall, I felt the weight of every soul who had suffered within those walls. The morning mist clung to the broken windows like desperate fingers, and I swear I could hear whispers echoing through the empty corridors - voices calling out in languages I didn't recognize, pleading for help that would never come. Have you ever wondered what secrets lie buried in the ruins of our forgotten institutions? What stories do the shadows tell when no one is listening? Today, we're going inside to uncover the chilling truth about those who lived and died in this place. Ravenshollow opened in 1952, built on what locals called cursed ground - a hillside where three separate families had vanished without explanation in the 1800s. The hospital was designed for 400 patients but by the 1970s housed over 1,300 souls in conditions that would horrify us today. Dr. Catherine Morse, the facility's longest-serving director, kept detailed journals that somehow survived the building's abandonment. Hidden in a sealed office, her final entries paint a disturbing picture. She wrote: \"The patients speak of visitors in white coats who come at night - figures who perform procedures that leave no physical trace but hollow out something essential.\" My investigation began with the story of Thomas Brennan, a twenty-two-year-old veteran admitted in 1968 for what his family called shell shock. According to his file, Thomas claimed he could see former patients wandering the halls - people in hospital gowns who had died years before, still searching for a way out. The staff dismissed these as hallucinations, but other patients began reporting identical encounters. Night shift nurse Eleanor Hayes kept a secret diary, hidden behind a loose brick in the staff quarters. Her final entry, dated November 3rd, 1971, reads: \"They're not imagining it. I've seen them too. The dead walk these halls, and when they touch the living, something fundamental changes. The light goes out of their eyes.\" Three days later, Eleanor Hayes was found dead in the hydrotherapy room, drowned in eighteen inches of water with no explanation for how she ended up there. In 1972, the hospital sealed off the entire north wing after what staff records refer to only as \"the incident.\" I found a handwritten account from Dr. James Whitmore, hidden in the abandoned pharmacy. He wrote: \"Patient 156-C began speaking in voices that weren't her own. During examination, she grabbed my arm with impossible strength and whispered, 'They're coming through tonight. The dead are bringing more back with them",
+          "submittedAt": "2025-07-25T08:50:09.436-04:00",
+          "formMode": "test"
+        }
+      }
+    ],
+    "Transcribe Media": [
+      {
+        "json": {
+          "build_number": 199,
+          "code": 200,
+          "id": "custom-job-123",
+          "job_id": "32e03988-f32b-462f-8ec7-d82016b85c9c",
+          "message": "success",
+          "pid": 8,
+          "queue_id": 140236505043104,
+          "queue_length": 0,
+          "queue_time": 0,
+          "response": {
+            "segments": [
+              {
+                "avg_logprob": -0.14880766351538968,
+                "compression_ratio": 1.5355648535564854,
+                "end": 6.24,
+                "id": 0,
+                "no_speech_prob": 0.00843238178640604,
+                "seek": 0,
+                "start": 0,
+                "temperature": 0,
+                "text": " I never believed that buildings could hold memories until I spent a night inside Ravens Hollow",
+                "tokens": [
+                  50364,
+                  286,
+                  1128,
+                  7847,
+                  300,
+                  7446,
+                  727,
+                  1797,
+                  8495,
+                  1826,
+                  286,
+                  4418,
+                  257,
+                  1818,
+                  1854,
+                  28956,
+                  82,
+                  46731,
+                  50676
+                ]
+              },
+              {
+                "avg_logprob": -0.14880766351538968,
+                "compression_ratio": 1.5355648535564854,
+                "end": 7.640000000000001,
+                "id": 1,
+                "no_speech_prob": 0.00843238178640604,
+                "seek": 0,
+                "start": 6.24,
+                "temperature": 0,
+                "text": " State Hospital.",
+                "tokens": [
+                  50676,
+                  4533,
+                  15645,
+                  13,
+                  50746
+                ]
+              },
+              {
+                "avg_logprob": -0.14880766351538968,
+                "compression_ratio": 1.5355648535564854,
+                "end": 13.44,
+                "id": 2,
+                "no_speech_prob": 0.00843238178640604,
+                "seek": 0,
+                "start": 7.640000000000001,
+                "temperature": 0,
+                "text": " The facility had been abandoned for nearly 40 years, but standing in that crumbling entrance",
+                "tokens": [
+                  50746,
+                  440,
+                  8973,
+                  632,
+                  668,
+                  13732,
+                  337,
+                  6217,
+                  3356,
+                  924,
+                  11,
+                  457,
+                  4877,
+                  294,
+                  300,
+                  941,
+                  14188,
+                  12014,
+                  51036
+                ]
+              },
+              {
+                "avg_logprob": -0.14880766351538968,
+                "compression_ratio": 1.5355648535564854,
+                "end": 20.6,
+                "id": 3,
+                "no_speech_prob": 0.00843238178640604,
+                "seek": 0,
+                "start": 13.44,
+                "temperature": 0,
+                "text": " hall, I felt the weight of every soul who had suffered within those walls.",
+                "tokens": [
+                  51036,
+                  6500,
+                  11,
+                  286,
+                  2762,
+                  264,
+                  3364,
+                  295,
+                  633,
+                  5133,
+                  567,
+                  632,
+                  12770,
+                  1951,
+                  729,
+                  7920,
+                  13,
+                  51394
+                ]
+              },
+              {
+                "avg_logprob": -0.14880766351538968,
+                "compression_ratio": 1.5355648535564854,
+                "end": 27.080000000000002,
+                "id": 4,
+                "no_speech_prob": 0.00843238178640604,
+                "seek": 0,
+                "start": 20.6,
+                "temperature": 0,
+                "text": " The morning mist clung to the broken windows like desperate fingers, and I swear I could",
+                "tokens": [
+                  51394,
+                  440,
+                  2446,
+                  3544,
+                  596,
+                  1063,
+                  281,
+                  264,
+                  5463,
+                  9309,
+                  411,
+                  17601,
+                  7350,
+                  11,
+                  293,
+                  286,
+                  11902,
+                  286,
+                  727,
+                  51718
+                ]
+              },
+              {
+                "avg_logprob": -0.17421850517614565,
+                "compression_ratio": 1.4948979591836735,
+                "end": 34.76,
+                "id": 5,
+                "no_speech_prob": 0.03205140307545662,
+                "seek": 2708,
+                "start": 27.08,
+                "temperature": 0,
+                "text": " hear whispers echoing through the empty corridors, voices calling out in languages I didn't",
+                "tokens": [
+                  50364,
+                  1568,
+                  315,
+                  31018,
+                  14300,
+                  278,
+                  807,
+                  264,
+                  6707,
+                  46920,
+                  11,
+                  9802,
+                  5141,
+                  484,
+                  294,
+                  8650,
+                  286,
+                  994,
+                  380,
+                  50748
+                ]
+              },
+              {
+                "avg_logprob": -0.17421850517614565,
+                "compression_ratio": 1.4948979591836735,
+                "end": 40,
+                "id": 6,
+                "no_speech_prob": 0.03205140307545662,
+                "seek": 2708,
+                "start": 34.76,
+                "temperature": 0,
+                "text": " recognize, pleading for help that would never come.",
+                "tokens": [
+                  50748,
+                  5521,
+                  11,
+                  3362,
+                  8166,
+                  337,
+                  854,
+                  300,
+                  576,
+                  1128,
+                  808,
+                  13,
+                  51010
+                ]
+              },
+              {
+                "avg_logprob": -0.17421850517614565,
+                "compression_ratio": 1.4948979591836735,
+                "end": 45.92,
+                "id": 7,
+                "no_speech_prob": 0.03205140307545662,
+                "seek": 2708,
+                "start": 40,
+                "temperature": 0,
+                "text": " Have you ever wondered what secrets lie buried in the ruins of our forgotten institutions,",
+                "tokens": [
+                  51010,
+                  3560,
+                  291,
+                  1562,
+                  17055,
+                  437,
+                  14093,
+                  4544,
+                  14101,
+                  294,
+                  264,
+                  24747,
+                  295,
+                  527,
+                  11832,
+                  8142,
+                  11,
+                  51306
+                ]
+              },
+              {
+                "avg_logprob": -0.17421850517614565,
+                "compression_ratio": 1.4948979591836735,
+                "end": 51.4,
+                "id": 8,
+                "no_speech_prob": 0.03205140307545662,
+                "seek": 2708,
+                "start": 45.92,
+                "temperature": 0,
+                "text": " what stories do the shadows tell when no one is listening?",
+                "tokens": [
+                  51306,
+                  437,
+                  3676,
+                  360,
+                  264,
+                  14740,
+                  980,
+                  562,
+                  572,
+                  472,
+                  307,
+                  4764,
+                  30,
+                  51580
+                ]
+              },
+              {
+                "avg_logprob": -0.22959260471531603,
+                "compression_ratio": 1.380952380952381,
+                "end": 63.239999999999995,
+                "id": 9,
+                "no_speech_prob": 0.040675919502973557,
+                "seek": 5140,
+                "start": 52.04,
+                "temperature": 0,
+                "text": " Today we're going inside to uncover the chilling truth about those who lived and died in this place.",
+                "tokens": [
+                  50396,
+                  2692,
+                  321,
+                  434,
+                  516,
+                  1854,
+                  281,
+                  21694,
+                  264,
+                  31047,
+                  3494,
+                  466,
+                  729,
+                  567,
+                  5152,
+                  293,
+                  4539,
+                  294,
+                  341,
+                  1081,
+                  13,
+                  50956
+                ]
+              },
+              {
+                "avg_logprob": -0.22959260471531603,
+                "compression_ratio": 1.380952380952381,
+                "end": 72.03999999999999,
+                "id": 10,
+                "no_speech_prob": 0.040675919502973557,
+                "seek": 5140,
+                "start": 63.239999999999995,
+                "temperature": 0,
+                "text": " Ravens Hollow opened in 1952, built on what locals called Cursed Ground, a hillside where three",
+                "tokens": [
+                  50956,
+                  28956,
+                  82,
+                  46731,
+                  5625,
+                  294,
+                  10858,
+                  17,
+                  11,
+                  3094,
+                  322,
+                  437,
+                  23335,
+                  1219,
+                  383,
+                  47267,
+                  28371,
+                  11,
+                  257,
+                  10997,
+                  1812,
+                  689,
+                  1045,
+                  51396
+                ]
+              },
+              {
+                "avg_logprob": -0.22959260471531603,
+                "compression_ratio": 1.380952380952381,
+                "end": 78.48,
+                "id": 11,
+                "no_speech_prob": 0.040675919502973557,
+                "seek": 5140,
+                "start": 72.03999999999999,
+                "temperature": 0,
+                "text": " separate families had vanished without explanation in the 1800s.",
+                "tokens": [
+                  51396,
+                  4994,
+                  4466,
+                  632,
+                  37518,
+                  1553,
+                  10835,
+                  294,
+                  264,
+                  24327,
+                  82,
+                  13,
+                  51718
+                ]
+              },
+              {
+                "avg_logprob": -0.22470502217610677,
+                "compression_ratio": 1.4396551724137931,
+                "end": 86.92,
+                "id": 12,
+                "no_speech_prob": 0.0007529516005888581,
+                "seek": 7848,
+                "start": 78.48,
+                "temperature": 0,
+                "text": " The hospital was designed for 400 patients, but by the 1970s housed over 1300 souls in conditions",
+                "tokens": [
+                  50364,
+                  440,
+                  4530,
+                  390,
+                  4761,
+                  337,
+                  8423,
+                  4209,
+                  11,
+                  457,
+                  538,
+                  264,
+                  14577,
+                  82,
+                  36084,
+                  670,
+                  48156,
+                  16588,
+                  294,
+                  4487,
+                  50786
+                ]
+              },
+              {
+                "avg_logprob": -0.22470502217610677,
+                "compression_ratio": 1.4396551724137931,
+                "end": 90.12,
+                "id": 13,
+                "no_speech_prob": 0.0007529516005888581,
+                "seek": 7848,
+                "start": 86.92,
+                "temperature": 0,
+                "text": " that would horrify us today.",
+                "tokens": [
+                  50786,
+                  300,
+                  576,
+                  17582,
+                  2505,
+                  505,
+                  965,
+                  13,
+                  50946
+                ]
+              },
+              {
+                "avg_logprob": -0.22470502217610677,
+                "compression_ratio": 1.4396551724137931,
+                "end": 96.08000000000001,
+                "id": 14,
+                "no_speech_prob": 0.0007529516005888581,
+                "seek": 7848,
+                "start": 90.12,
+                "temperature": 0,
+                "text": " Dr. Catherine Morse, the facilities longest serving director, kept detailed journals that somehow",
+                "tokens": [
+                  50946,
+                  2491,
+                  13,
+                  23098,
+                  5146,
+                  405,
+                  11,
+                  264,
+                  9406,
+                  15438,
+                  8148,
+                  5391,
+                  11,
+                  4305,
+                  9942,
+                  29621,
+                  300,
+                  6063,
+                  51244
+                ]
+              },
+              {
+                "avg_logprob": -0.22470502217610677,
+                "compression_ratio": 1.4396551724137931,
+                "end": 103,
+                "id": 15,
+                "no_speech_prob": 0.0007529516005888581,
+                "seek": 7848,
+                "start": 96.08000000000001,
+                "temperature": 0,
+                "text": " survived the building's abandonment, hidden in a sealed office, her final entries painted",
+                "tokens": [
+                  51244,
+                  14433,
+                  264,
+                  2390,
+                  311,
+                  9072,
+                  518,
+                  11,
+                  7633,
+                  294,
+                  257,
+                  21514,
+                  3398,
+                  11,
+                  720,
+                  2572,
+                  23041,
+                  11797,
+                  51590
+                ]
+              },
+              {
+                "avg_logprob": -0.22470502217610677,
+                "compression_ratio": 1.4396551724137931,
+                "end": 105.60000000000001,
+                "id": 16,
+                "no_speech_prob": 0.0007529516005888581,
+                "seek": 7848,
+                "start": 103,
+                "temperature": 0,
+                "text": " disturbing picture.",
+                "tokens": [
+                  51590,
+                  21903,
+                  3036,
+                  13,
+                  51720
+                ]
+              },
+              {
+                "avg_logprob": -0.15218752452305384,
+                "compression_ratio": 1.4212962962962963,
+                "end": 112.24,
+                "id": 17,
+                "no_speech_prob": 0.010561649687588215,
+                "seek": 10560,
+                "start": 105.6,
+                "temperature": 0,
+                "text": " She wrote, the patients speak of visitors in white coats who come at night, figures who",
+                "tokens": [
+                  50364,
+                  1240,
+                  4114,
+                  11,
+                  264,
+                  4209,
+                  1710,
+                  295,
+                  14315,
+                  294,
+                  2418,
+                  30036,
+                  567,
+                  808,
+                  412,
+                  1818,
+                  11,
+                  9624,
+                  567,
+                  50696
+                ]
+              },
+              {
+                "avg_logprob": -0.15218752452305384,
+                "compression_ratio": 1.4212962962962963,
+                "end": 120.47999999999999,
+                "id": 18,
+                "no_speech_prob": 0.010561649687588215,
+                "seek": 10560,
+                "start": 112.24,
+                "temperature": 0,
+                "text": " perform procedures that leave no physical trace but hollow out something essential.",
+                "tokens": [
+                  50696,
+                  2042,
+                  13846,
+                  300,
+                  1856,
+                  572,
+                  4001,
+                  13508,
+                  457,
+                  23972,
+                  484,
+                  746,
+                  7115,
+                  13,
+                  51108
+                ]
+              },
+              {
+                "avg_logprob": -0.15218752452305384,
+                "compression_ratio": 1.4212962962962963,
+                "end": 126,
+                "id": 19,
+                "no_speech_prob": 0.010561649687588215,
+                "seek": 10560,
+                "start": 120.47999999999999,
+                "temperature": 0,
+                "text": " My investigation began with the story of Thomas Brennan, a 22-year-old veteran admitted",
+                "tokens": [
+                  51108,
+                  1222,
+                  9627,
+                  4283,
+                  365,
+                  264,
+                  1657,
+                  295,
+                  8500,
+                  31200,
+                  17622,
+                  11,
+                  257,
+                  5853,
+                  12,
+                  5294,
+                  12,
+                  2641,
+                  18324,
+                  14920,
+                  51384
+                ]
+              },
+              {
+                "avg_logprob": -0.15218752452305384,
+                "compression_ratio": 1.4212962962962963,
+                "end": 131.28,
+                "id": 20,
+                "no_speech_prob": 0.010561649687588215,
+                "seek": 10560,
+                "start": 126,
+                "temperature": 0,
+                "text": " in 1968 for what his family called Shell Shock.",
+                "tokens": [
+                  51384,
+                  294,
+                  29930,
+                  337,
+                  437,
+                  702,
+                  1605,
+                  1219,
+                  22863,
+                  39474,
+                  13,
+                  51648
+                ]
+              },
+              {
+                "avg_logprob": -0.14423989057540892,
+                "compression_ratio": 1.5583333333333333,
+                "end": 136.64000000000001,
+                "id": 21,
+                "no_speech_prob": 0.007178943138569593,
+                "seek": 13128,
+                "start": 131.28,
+                "temperature": 0,
+                "text": " According to his file, Thomas claimed he could see former patients wandering the halls,",
+                "tokens": [
+                  50364,
+                  7328,
+                  281,
+                  702,
+                  3991,
+                  11,
+                  8500,
+                  12941,
+                  415,
+                  727,
+                  536,
+                  5819,
+                  4209,
+                  26396,
+                  264,
+                  26177,
+                  11,
+                  50632
+                ]
+              },
+              {
+                "avg_logprob": -0.14423989057540892,
+                "compression_ratio": 1.5583333333333333,
+                "end": 143.44,
+                "id": 22,
+                "no_speech_prob": 0.007178943138569593,
+                "seek": 13128,
+                "start": 136.64000000000001,
+                "temperature": 0,
+                "text": " people in hospital gowns who had died years before, still searching for a way out.",
+                "tokens": [
+                  50632,
+                  561,
+                  294,
+                  4530,
+                  34428,
+                  82,
+                  567,
+                  632,
+                  4539,
+                  924,
+                  949,
+                  11,
+                  920,
+                  10808,
+                  337,
+                  257,
+                  636,
+                  484,
+                  13,
+                  50972
+                ]
+              },
+              {
+                "avg_logprob": -0.14423989057540892,
+                "compression_ratio": 1.5583333333333333,
+                "end": 151.24,
+                "id": 23,
+                "no_speech_prob": 0.007178943138569593,
+                "seek": 13128,
+                "start": 143.44,
+                "temperature": 0,
+                "text": " The staff dismissed these as hallucinations but other patients began reporting identical encounters.",
+                "tokens": [
+                  50972,
+                  440,
+                  3525,
+                  29970,
+                  613,
+                  382,
+                  35212,
+                  10325,
+                  457,
+                  661,
+                  4209,
+                  4283,
+                  10031,
+                  14800,
+                  26310,
+                  13,
+                  51362
+                ]
+              },
+              {
+                "avg_logprob": -0.14423989057540892,
+                "compression_ratio": 1.5583333333333333,
+                "end": 158.12,
+                "id": 24,
+                "no_speech_prob": 0.007178943138569593,
+                "seek": 13128,
+                "start": 151.24,
+                "temperature": 0,
+                "text": " Night shift nurse Eleanor Hayes kept a secret diary hidden behind a loose brick in the staff quarters.",
+                "tokens": [
+                  51362,
+                  10190,
+                  5513,
+                  14012,
+                  8024,
+                  29330,
+                  8721,
+                  279,
+                  4305,
+                  257,
+                  4054,
+                  26492,
+                  7633,
+                  2261,
+                  257,
+                  9612,
+                  16725,
+                  294,
+                  264,
+                  3525,
+                  20612,
+                  13,
+                  51706
+                ]
+              },
+              {
+                "avg_logprob": -0.22720088958740234,
+                "compression_ratio": 1.4497607655502391,
+                "end": 165.52,
+                "id": 25,
+                "no_speech_prob": 0.2908167541027069,
+                "seek": 15812,
+                "start": 158.12,
+                "temperature": 0,
+                "text": " Her final entry dated November 3rd, 1971 reads, they're not imagining it.",
+                "tokens": [
+                  50364,
+                  3204,
+                  2572,
+                  8729,
+                  23804,
+                  7674,
+                  805,
+                  7800,
+                  11,
+                  34578,
+                  15700,
+                  11,
+                  436,
+                  434,
+                  406,
+                  27798,
+                  309,
+                  13,
+                  50734
+                ]
+              },
+              {
+                "avg_logprob": -0.22720088958740234,
+                "compression_ratio": 1.4497607655502391,
+                "end": 167.52,
+                "id": 26,
+                "no_speech_prob": 0.2908167541027069,
+                "seek": 15812,
+                "start": 165.52,
+                "temperature": 0,
+                "text": " I've seen them too.",
+                "tokens": [
+                  50734,
+                  286,
+                  600,
+                  1612,
+                  552,
+                  886,
+                  13,
+                  50834
+                ]
+              },
+              {
+                "avg_logprob": -0.22720088958740234,
+                "compression_ratio": 1.4497607655502391,
+                "end": 175.20000000000002,
+                "id": 27,
+                "no_speech_prob": 0.2908167541027069,
+                "seek": 15812,
+                "start": 167.52,
+                "temperature": 0,
+                "text": " The dead walk these halls and when they touch the living, something fundamental changes.",
+                "tokens": [
+                  50834,
+                  440,
+                  3116,
+                  1792,
+                  613,
+                  26177,
+                  293,
+                  562,
+                  436,
+                  2557,
+                  264,
+                  2647,
+                  11,
+                  746,
+                  8088,
+                  2962,
+                  13,
+                  51218
+                ]
+              },
+              {
+                "avg_logprob": -0.22720088958740234,
+                "compression_ratio": 1.4497607655502391,
+                "end": 179.04000000000002,
+                "id": 28,
+                "no_speech_prob": 0.2908167541027069,
+                "seek": 15812,
+                "start": 175.20000000000002,
+                "temperature": 0,
+                "text": " The light goes out of their eyes.",
+                "tokens": [
+                  51218,
+                  440,
+                  1442,
+                  1709,
+                  484,
+                  295,
+                  641,
+                  2575,
+                  13,
+                  51410
+                ]
+              },
+              {
+                "avg_logprob": -0.22720088958740234,
+                "compression_ratio": 1.4497607655502391,
+                "end": 185.28,
+                "id": 29,
+                "no_speech_prob": 0.2908167541027069,
+                "seek": 15812,
+                "start": 179.04000000000002,
+                "temperature": 0,
+                "text": " Three days later, Eleanor Hayes was found dead in the hydrotherapy room, drowned in 18",
+                "tokens": [
+                  51410,
+                  6244,
+                  1708,
+                  1780,
+                  11,
+                  8024,
+                  29330,
+                  8721,
+                  279,
+                  390,
+                  1352,
+                  3116,
+                  294,
+                  264,
+                  5796,
+                  81,
+                  23208,
+                  1808,
+                  11,
+                  38233,
+                  294,
+                  2443,
+                  51722
+                ]
+              },
+              {
+                "avg_logprob": -0.1751934189394296,
+                "compression_ratio": 1.4541484716157205,
+                "end": 191.52,
+                "id": 30,
+                "no_speech_prob": 0.0282819252461195,
+                "seek": 18528,
+                "start": 185.28,
+                "temperature": 0,
+                "text": " inches of water with no explanation for how she ended up there.",
+                "tokens": [
+                  50364,
+                  8478,
+                  295,
+                  1281,
+                  365,
+                  572,
+                  10835,
+                  337,
+                  577,
+                  750,
+                  4590,
+                  493,
+                  456,
+                  13,
+                  50676
+                ]
+              },
+              {
+                "avg_logprob": -0.1751934189394296,
+                "compression_ratio": 1.4541484716157205,
+                "end": 197.76,
+                "id": 31,
+                "no_speech_prob": 0.0282819252461195,
+                "seek": 18528,
+                "start": 191.52,
+                "temperature": 0,
+                "text": " In 1972, the hospital sealed off the entire North Wing after what staff records refer to",
+                "tokens": [
+                  50676,
+                  682,
+                  32952,
+                  11,
+                  264,
+                  4530,
+                  21514,
+                  766,
+                  264,
+                  2302,
+                  4067,
+                  28785,
+                  934,
+                  437,
+                  3525,
+                  7724,
+                  2864,
+                  281,
+                  50988
+                ]
+              },
+              {
+                "avg_logprob": -0.1751934189394296,
+                "compression_ratio": 1.4541484716157205,
+                "end": 201.12,
+                "id": 32,
+                "no_speech_prob": 0.0282819252461195,
+                "seek": 18528,
+                "start": 197.76,
+                "temperature": 0,
+                "text": " only as the incident.",
+                "tokens": [
+                  50988,
+                  787,
+                  382,
+                  264,
+                  9348,
+                  13,
+                  51156
+                ]
+              },
+              {
+                "avg_logprob": -0.1751934189394296,
+                "compression_ratio": 1.4541484716157205,
+                "end": 207.04,
+                "id": 33,
+                "no_speech_prob": 0.0282819252461195,
+                "seek": 18528,
+                "start": 201.12,
+                "temperature": 0,
+                "text": " I found a handwritten account from Dr. James Whitmore, hidden in the abandoned pharmacy.",
+                "tokens": [
+                  51156,
+                  286,
+                  1352,
+                  257,
+                  1011,
+                  26859,
+                  2696,
+                  490,
+                  2491,
+                  13,
+                  5678,
+                  21693,
+                  3138,
+                  11,
+                  7633,
+                  294,
+                  264,
+                  13732,
+                  30639,
+                  13,
+                  51452
+                ]
+              },
+              {
+                "avg_logprob": -0.1751934189394296,
+                "compression_ratio": 1.4541484716157205,
+                "end": 214.6,
+                "id": 34,
+                "no_speech_prob": 0.0282819252461195,
+                "seek": 18528,
+                "start": 207.04,
+                "temperature": 0,
+                "text": " He wrote, patient 156c began speaking in voices that weren't her own.",
+                "tokens": [
+                  51452,
+                  634,
+                  4114,
+                  11,
+                  4537,
+                  2119,
+                  21,
+                  66,
+                  4283,
+                  4124,
+                  294,
+                  9802,
+                  300,
+                  4999,
+                  380,
+                  720,
+                  1065,
+                  13,
+                  51830
+                ]
+              },
+              {
+                "avg_logprob": -0.6591362555821737,
+                "compression_ratio": 0.8596491228070176,
+                "end": 217.4,
+                "id": 35,
+                "no_speech_prob": 0.8947464823722839,
+                "seek": 21460,
+                "start": 214.6,
+                "temperature": 0,
+                "text": " According examination, she grabbed my arm with...",
+                "tokens": [
+                  50364,
+                  7328,
+                  23874,
+                  11,
+                  750,
+                  18607,
+                  452,
+                  3726,
+                  365,
+                  485,
+                  50504
+                ]
+              }
+            ],
+            "segments_url": null,
+            "srt": "1\n00:00:00,000 --> 00:00:06,240\nI never believed that buildings could hold memories until I spent a night inside Ravens Hollow\n\n2\n00:00:06,240 --> 00:00:07,640\nState Hospital.\n\n3\n00:00:07,640 --> 00:00:13,440\nThe facility had been abandoned for nearly 40 years, but standing in that crumbling entrance\n\n4\n00:00:13,440 --> 00:00:20,600\nhall, I felt the weight of every soul who had suffered within those walls.\n\n5\n00:00:20,600 --> 00:00:27,080\nThe morning mist clung to the broken windows like desperate fingers, and I swear I could\n\n6\n00:00:27,080 --> 00:00:34,760\nhear whispers echoing through the empty corridors, voices calling out in languages I didn't\n\n7\n00:00:34,760 --> 00:00:40,000\nrecognize, pleading for help that would never come.\n\n8\n00:00:40,000 --> 00:00:45,920\nHave you ever wondered what secrets lie buried in the ruins of our forgotten institutions,\n\n9\n00:00:45,920 --> 00:00:51,400\nwhat stories do the shadows tell when no one is listening?\n\n10\n00:00:52,040 --> 00:01:03,240\nToday we're going inside to uncover the chilling truth about those who lived and died in this place.\n\n11\n00:01:03,240 --> 00:01:12,040\nRavens Hollow opened in 1952, built on what locals called Cursed Ground, a hillside where three\n\n12\n00:01:12,040 --> 00:01:18,480\nseparate families had vanished without explanation in the 1800s.\n\n13\n00:01:18,480 --> 00:01:26,920\nThe hospital was designed for 400 patients, but by the 1970s housed over 1300 souls in conditions\n\n14\n00:01:26,920 --> 00:01:30,120\nthat would horrify us today.\n\n15\n00:01:30,120 --> 00:01:36,080\nDr. Catherine Morse, the facilities longest serving director, kept detailed journals that somehow\n\n16\n00:01:36,080 --> 00:01:43,000\nsurvived the building's abandonment, hidden in a sealed office, her final entries painted\n\n17\n00:01:43,000 --> 00:01:45,600\ndisturbing picture.\n\n18\n00:01:45,600 --> 00:01:52,240\nShe wrote, the patients speak of visitors in white coats who come at night, figures who\n\n19\n00:01:52,240 --> 00:02:00,480\nperform procedures that leave no physical trace but hollow out something essential.\n\n20\n00:02:00,480 --> 00:02:06,000\nMy investigation began with the story of Thomas Brennan, a 22-year-old veteran admitted\n\n21\n00:02:06,000 --> 00:02:11,280\nin 1968 for what his family called Shell Shock.\n\n22\n00:02:11,280 --> 00:02:16,640\nAccording to his file, Thomas claimed he could see former patients wandering the halls,\n\n23\n00:02:16,640 --> 00:02:23,440\npeople in hospital gowns who had died years before, still searching for a way out.\n\n24\n00:02:23,440 --> 00:02:31,240\nThe staff dismissed these as hallucinations but other patients began reporting identical encounters.\n\n25\n00:02:31,240 --> 00:02:38,120\nNight shift nurse Eleanor Hayes kept a secret diary hidden behind a loose brick in the staff quarters.\n\n26\n00:02:38,120 --> 00:02:45,520\nHer final entry dated November 3rd, 1971 reads, they're not imagining it.\n\n27\n00:02:45,520 --> 00:02:47,520\nI've seen them too.\n\n28\n00:02:47,520 --> 00:02:55,200\nThe dead walk these halls and when they touch the living, something fundamental changes.\n\n29\n00:02:55,200 --> 00:02:59,040\nThe light goes out of their eyes.\n\n30\n00:02:59,040 --> 00:03:05,280\nThree days later, Eleanor Hayes was found dead in the hydrotherapy room, drowned in 18\n\n31\n00:03:05,280 --> 00:03:11,520\ninches of water with no explanation for how she ended up there.\n\n32\n00:03:11,520 --> 00:03:17,760\nIn 1972, the hospital sealed off the entire North Wing after what staff records refer to\n\n33\n00:03:17,760 --> 00:03:21,120\nonly as the incident.\n\n34\n00:03:21,120 --> 00:03:27,040\nI found a handwritten account from Dr. James Whitmore, hidden in the abandoned pharmacy.\n\n35\n00:03:27,040 --> 00:03:34,600\nHe wrote, patient 156c began speaking in voices that weren't her own.\n\n36\n00:03:34,600 --> 00:03:37,400\nAccording examination, she grabbed my arm with...\n\n",
+            "srt_url": null,
+            "text": " I never believed that buildings could hold memories until I spent a night inside Ravens Hollow State Hospital. The facility had been abandoned for nearly 40 years, but standing in that crumbling entrance hall, I felt the weight of every soul who had suffered within those walls. The morning mist clung to the broken windows like desperate fingers, and I swear I could hear whispers echoing through the empty corridors, voices calling out in languages I didn't recognize, pleading for help that would never come. Have you ever wondered what secrets lie buried in the ruins of our forgotten institutions, what stories do the shadows tell when no one is listening? Today we're going inside to uncover the chilling truth about those who lived and died in this place. Ravens Hollow opened in 1952, built on what locals called Cursed Ground, a hillside where three separate families had vanished without explanation in the 1800s. The hospital was designed for 400 patients, but by the 1970s housed over 1300 souls in conditions that would horrify us today. Dr. Catherine Morse, the facilities longest serving director, kept detailed journals that somehow survived the building's abandonment, hidden in a sealed office, her final entries painted disturbing picture. She wrote, the patients speak of visitors in white coats who come at night, figures who perform procedures that leave no physical trace but hollow out something essential. My investigation began with the story of Thomas Brennan, a 22-year-old veteran admitted in 1968 for what his family called Shell Shock. According to his file, Thomas claimed he could see former patients wandering the halls, people in hospital gowns who had died years before, still searching for a way out. The staff dismissed these as hallucinations but other patients began reporting identical encounters. Night shift nurse Eleanor Hayes kept a secret diary hidden behind a loose brick in the staff quarters. Her final entry dated November 3rd, 1971 reads, they're not imagining it. I've seen them too. The dead walk these halls and when they touch the living, something fundamental changes. The light goes out of their eyes. Three days later, Eleanor Hayes was found dead in the hydrotherapy room, drowned in 18 inches of water with no explanation for how she ended up there. In 1972, the hospital sealed off the entire North Wing after what staff records refer to only as the incident. I found a handwritten account from Dr. James Whitmore, hidden in the abandoned pharmacy. He wrote, patient 156c began speaking in voices that weren't her own. According examination, she grabbed my arm with...",
+            "text_url": null
+          },
+          "run_time": 18.706,
+          "total_time": 18.706
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Generate UUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Generate UUID1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Prompt & url": {
+      "main": [
+        [
+          {
+            "node": "Create Video Clips",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set length & Speed": {
+      "main": [
+        [
+          {
+            "node": "Form1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate2": {
+      "main": [
+        [
+          {
+            "node": "Video url to array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Video Clips": {
+      "main": [
+        [
+          {
+            "node": "Aggregate2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video url to array": {
+      "main": [
+        [
+          {
+            "node": "Create Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Video": {
+      "main": [
+        [
+          {
+            "node": "Add TTS To Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add TTS To Video": {
+      "main": [
+        []
+      ]
+    },
+    "Upload Image": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Audio Duration": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate UUID": {
+      "main": [
+        [
+          {
+            "node": "Set Prompt & url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Audio S": {
+      "main": [
+        [
+          {
+            "node": "Get Audio Duration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Prompter V2 📷": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Image Prompter V2 📷",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Image Prompter V2 📷",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate UUID1": {
+      "main": [
+        [
+          {
+            "node": "Set length & Speed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request9": {
+      "main": [
+        [
+          {
+            "node": "Set base1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set base1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File3": {
+      "main": [
+        [
+          {
+            "node": "Upload Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File5": {
+      "main": [
+        [
+          {
+            "node": "Upload Audio S",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Image Prompter V2 📷",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Media": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Image Prompter V2 📷",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d9e5ae89-3f3f-470c-875e-c8739154cf98",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a62ec058a423ee2cc68fe37635f9e425cf2382745aab8994009332c5415c945a"
+  },
+  "id": "ql2ao9lklLTnQLhs",
+  "tags": []
+}
